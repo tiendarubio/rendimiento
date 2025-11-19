@@ -1,0 +1,114 @@
+/* Core styles */
+:root{
+  --ring:#e9ecef; --card:#ffffff; --muted:#6c757d;
+  --brand:#0d6efd; --ok:#198754; --warn:#ffc107; --danger:#dc3545;
+}
+body{font-family:'Calibri',Arial,sans-serif;background:#f7f7f8}
+.logo{max-width:160px;margin:12px auto;display:block}
+.section-container{padding:18px;border:1.5px solid var(--ring);border-radius:14px;margin-bottom:18px;background:var(--card)}
+.section-title{margin-bottom:12px;font-weight:700}
+
+.header-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+.header-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center}
+.badge-store{display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;
+  font-size:1rem;font-weight:700;border:2px solid transparent}
+.badge-sexta{background:#fff2e2;border-color:#ffb74d;color:#b06a00}
+.badge-morazan{background:#e8f5e9;border-color:#66bb6a;color:#1b5e20}
+.badge-centro{background:#e3f2fd;border-color:#64b5f6;color:#0d47a1}
+#lastSaved{font-size:.95rem;color:#495057}
+
+.table-responsive{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.table thead th{white-space:nowrap}
+.btn-icon{min-width:44px}
+.btn-toggle.off{filter:grayscale(1);opacity:.55}
+.btn-toggle.on{filter:none;opacity:1}
+
+/* Lista de sugerencias debajo del buscador */
+#suggestions {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: .25rem;
+}
+
+/* Cada item: que no se vea aplastado ni cortado raro */
+#suggestions .list-group-item {
+  white-space: normal;       /* permite varias líneas */
+  line-height: 1.4;
+  padding: .35rem .75rem;
+}
+
+/* Item activo cuando navegas con flechas */
+#suggestions .list-group-item.active {
+  font-weight: 600;
+}
+
+/* Toolbar */
+.toolbar{display:grid;grid-template-columns: repeat(4, minmax(120px,1fr));gap:10px}
+@media (max-width: 992px){ .toolbar{grid-template-columns: repeat(3, 1fr);} }
+@media (max-width: 576px){ .toolbar{grid-template-columns: repeat(2, 1fr);} }
+.toolbar .btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px;border-radius:10px;font-weight:600}
+.toolbar .btn i{font-size:1rem}
+
+/* Store select normal */
+.store-select{max-width:560px;width:100%}
+
+/* Scanner area */
+#scanWrap{display:none}
+#scanWrap.active{display:block}
+.scanner{position:relative;border:1.5px solid var(--ring);border-radius:12px;overflow:hidden}
+.scanner video{width:100%;height:auto;display:block;background:#000}
+.scan-overlay{position:absolute;inset:0;pointer-events:none;border:2px dashed rgba(255,255,255,.6)}
+.scan-msg{position:absolute;left:0;right:0;bottom:8px;text-align:center;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8)}
+
+/* ===== Dashboard rendimiento dependientxs ===== */
+
+.dashboard-cards{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+  gap:14px;
+  margin-top:8px;
+}
+.dashboard-card{
+  padding:14px 16px;
+  border-radius:14px;
+  background:#ffffff;
+  border:1px solid #e9ecef;
+  box-shadow:0 4px 14px rgba(15,23,42,0.04);
+}
+.dashboard-card-title{
+  font-size:.85rem;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:#6c757d;
+  margin-bottom:6px;
+}
+.dashboard-card-value{
+  font-size:1.6rem;
+  font-weight:700;
+  color:#212529;
+}
+.dashboard-card-sub{
+  font-size:.85rem;
+  color:#6c757d;
+  margin-top:2px;
+}
+
+#tablaHistorico tbody tr:hover,
+#tablaDetalleDependiente tbody tr:hover{
+  background:#f1f3f5;
+}
+
+.nav-tabs .nav-link{
+  border-radius:999px 999px 0 0;
+  padding:.45rem .9rem;
+}
+
+@media (max-width: 576px){
+  .nav-tabs{
+    flex-wrap:nowrap;
+    overflow-x:auto;
+  }
+  .nav-tabs .nav-link{
+    white-space:nowrap;
+  }
+}
