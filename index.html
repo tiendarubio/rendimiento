@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TRRendimiento — Dependientxs</title>
-
+  <title>TRLista — Rendimiento dependientxs</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
   <link href="assets/css/styles.css" rel="stylesheet">
@@ -13,207 +12,119 @@
   <div class="container mt-3">
     <img src="assets/img/trlogo.png" alt="Logo" class="logo">
 
+    <!-- Encabezado -->
     <div class="header-wrap mb-3">
-      <div class="header-row">
-        <span class="badge-store badge-morazan">
-          <i class="fa-solid fa-users"></i>
-          <span>Dashboard de dependientxs</span>
-        </span>
+      <div class="text-center">
+        <h1 class="h4 mb-1">Rendimiento por dependientx</h1>
+        <div class="small text-muted">
+          Seguimiento diario del aporte a metas por sucursal y meta personal
+        </div>
       </div>
-      <div id="lastSavedHist">Histórico: aún no guardado.</div>
+      <div id="lastSaved">Aún no guardado.</div>
     </div>
 
-    <!-- Registro rápido de venta diaria -->
+    <!-- Filtros de fecha y sucursal -->
     <div class="section-container mb-3">
-      <h5 class="section-title mb-2">Registro rápido</h5>
-      <div class="row g-3">
-        <div class="col-6 col-md-3">
-          <label class="form-label">Fecha</label>
-          <input id="inputFecha" type="date" class="form-control">
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-4">
+          <label for="fechaInput" class="form-label fw-bold mb-0">Fecha</label>
+          <input type="date" id="fechaInput" class="form-control">
         </div>
-
-        <div class="col-6 col-md-3">
-          <label class="form-label">Tienda</label>
-          <select id="selectTienda" class="form-select">
-            <option value="">Todas</option>
+        <div class="col-12 col-md-4">
+          <label for="sucursalFiltro" class="form-label fw-bold mb-0">Sucursal</label>
+          <select id="sucursalFiltro" class="form-select">
+            <option value="TODAS">Todas</option>
+            <!-- Sucursales se llenan dinámicamente desde la columna B -->
           </select>
         </div>
-
-        <div class="col-12 col-md-3">
-          <label class="form-label">Dependientx</label>
-          <select id="selectDependientx" class="form-select">
-            <option value="">Seleccione…</option>
-          </select>
+        <div class="col-12 col-md-4 d-flex gap-2 mt-2 mt-md-0">
+          <button id="btnHoy" class="btn btn-outline-secondary flex-fill">
+            <i class="fa-regular fa-calendar"></i> Hoy
+          </button>
+          <button id="btnLimpiarRegistros" class="btn btn-outline-danger flex-fill">
+            <i class="fa-solid fa-trash"></i> Limpiar todo
+          </button>
         </div>
-
-        <div class="col-6 col-md-3">
-          <label class="form-label">Meta diaria</label>
-          <input id="inputMeta" type="number" step="0.01" class="form-control" placeholder="0.00">
-        </div>
-
-        <div class="col-6 col-md-3">
-          <label class="form-label">Venta del día</label>
-          <input id="inputVenta" type="number" step="0.01" class="form-control" placeholder="0.00">
-        </div>
-
-        <div class="col-12 col-md-9">
-          <label class="form-label">Notas (opcional)</label>
-          <input id="inputNotas" type="text" class="form-control" placeholder="Comentarios del día">
-        </div>
-      </div>
-
-      <div class="d-flex flex-wrap gap-2 mt-3">
-        <button id="btnAgregarRegistro" class="btn btn-primary">
-          <i class="fa-solid fa-plus"></i> Registrar venta del día
-        </button>
-        <button id="btnGuardarHist" class="btn btn-outline-success">
-          <i class="fa-solid fa-cloud-arrow-up"></i> Guardar histórico
-        </button>
       </div>
     </div>
 
-    <!-- Dashboard y consultas -->
-    <div class="section-container">
-      <div class="row g-3 align-items-end mb-3">
-        <div class="col-6 col-md-3">
-          <label class="form-label">Desde</label>
-          <input id="inputDesde" type="date" class="form-control">
-        </div>
-        <div class="col-6 col-md-3">
-          <label class="form-label">Hasta</label>
-          <input id="inputHasta" type="date" class="form-control">
-        </div>
-        <div class="col-12 col-md-3">
-          <label class="form-label">Filtro dependientx</label>
-          <select id="filterDependientx" class="form-select">
-            <option value="">Todos</option>
+    <!-- Registro de ventas del día -->
+    <div class="section-container mb-3">
+      <h2 class="section-title">Registrar venta diaria</h2>
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-4">
+          <label for="dependienteSelect" class="form-label mb-0">Dependientx</label>
+          <select id="dependienteSelect" class="form-select">
+            <!-- Se llena desde la columna A -->
           </select>
         </div>
-        <div class="col-12 col-md-3 d-flex">
-          <button id="btnAplicarFiltros" class="btn btn-outline-primary w-100 mt-3 mt-md-0">
-            <i class="fa-solid fa-filter"></i> Aplicar filtros
+        <div class="col-12 col-md-4">
+          <label for="sucursalSelect" class="form-label mb-0">Sucursal</label>
+          <select id="sucursalSelect" class="form-select">
+            <!-- Se llena desde la columna B -->
+          </select>
+        </div>
+        <div class="col-12 col-md-3">
+          <label for="montoInput" class="form-label mb-0">Monto del día (USD)</label>
+          <input id="montoInput" type="number" step="0.01" min="0" class="form-control" placeholder="0.00">
+        </div>
+        <div class="col-12 col-md-1 d-grid">
+          <button id="btnAgregarRegistro" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i>
           </button>
         </div>
       </div>
 
-      <!-- Cards de resumen -->
-      <div class="dashboard-cards mb-3">
-        <div class="dashboard-card">
-          <div class="dashboard-card-title">Venta total</div>
-          <div id="cardTotalVenta" class="dashboard-card-value">0.00</div>
-          <div id="cardTotalVentaSub" class="dashboard-card-sub">En el rango seleccionado</div>
-        </div>
-        <div class="dashboard-card">
-          <div class="dashboard-card-title">% meta global</div>
-          <div id="cardPorcMeta" class="dashboard-card-value">0%</div>
-          <div id="cardPorcMetaSub" class="dashboard-card-sub">Venta vs meta sumada</div>
-        </div>
-        <div class="dashboard-card">
-          <div class="dashboard-card-title">Dependientxs que cumplen meta</div>
-          <div id="cardCumplenMeta" class="dashboard-card-value">0 / 0</div>
-          <div class="dashboard-card-sub">Al menos 100% de su meta promedio</div>
+      <!-- Tabla de registros crudos (filtrados por fecha y sucursal) -->
+      <div class="mt-3">
+        <h3 class="h6 mb-2">Registros del día filtrado</h3>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered align-middle" id="tablaRegistros">
+            <thead class="table-light">
+              <tr>
+                <th>Fecha</th>
+                <th>Dependientx</th>
+                <th>Sucursal</th>
+                <th class="text-end">Monto</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyRegistros"></tbody>
+          </table>
         </div>
       </div>
+    </div>
 
-      <!-- Tabs -->
-      <ul class="nav nav-tabs" id="tabsRendimiento" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="tab-dashboard-tab" data-bs-toggle="tab" data-bs-target="#tab-dashboard" type="button" role="tab">
-            Dashboard
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="tab-dependiente-tab" data-bs-toggle="tab" data-bs-target="#tab-dependiente" type="button" role="tab">
-            Por dependientx
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="tab-tabla-tab" data-bs-toggle="tab" data-bs-target="#tab-tabla" type="button" role="tab">
-            Tabla
-          </button>
-        </li>
-      </ul>
+    <!-- Avance de meta por sucursal -->
+    <div class="section-container mb-3">
+      <h2 class="section-title">Avance de meta por sucursal (día seleccionado)</h2>
+      <div id="storeSummary" class="row g-3">
+        <!-- Se llena dinámicamente -->
+      </div>
+    </div>
 
-      <div class="tab-content pt-3">
-        <!-- Tab Dashboard -->
-        <div class="tab-pane fade show active" id="tab-dashboard" role="tabpanel">
-          <div class="row g-3">
-            <div class="col-12 col-lg-6">
-              <h6 class="mb-2">Ranking por dependientx</h6>
-              <div style="min-height:280px;">
-                <canvas id="chartRanking"></canvas>
-              </div>
-            </div>
-            <div class="col-12 col-lg-6">
-              <h6 class="mb-2">Tendencia por día</h6>
-              <div style="min-height:280px;">
-                <canvas id="chartTendencia"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tab por dependientx -->
-        <div class="tab-pane fade" id="tab-dependiente" role="tabpanel">
-          <div class="row g-3">
-            <div class="col-12 col-lg-4">
-              <label class="form-label">Seleccionar dependientx</label>
-              <select id="detalleDependientx" class="form-select">
-                <option value="">Seleccione…</option>
-              </select>
-            </div>
-            <div class="col-12 col-lg-8">
-              <h6 class="mb-2">Venta vs meta por día</h6>
-              <div style="min-height:280px;">
-                <canvas id="chartDetalleDependiente"></canvas>
-              </div>
-            </div>
-          </div>
-          <div class="table-responsive mt-3">
-            <table class="table table-sm table-striped" id="tablaDetalleDependiente">
-              <thead class="table-light">
-                <tr>
-                  <th>Fecha</th>
-                  <th>Tienda</th>
-                  <th>Venta</th>
-                  <th>Meta</th>
-                  <th>% Cumplimiento</th>
-                  <th>Notas</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Tab tabla -->
-        <div class="tab-pane fade" id="tab-tabla" role="tabpanel">
-          <div class="table-responsive">
-            <table class="table table-sm table-striped" id="tablaHistorico">
-              <thead class="table-light">
-                <tr>
-                  <th>Fecha</th>
-                  <th>Dependientx</th>
-                  <th>Tienda</th>
-                  <th>Venta</th>
-                  <th>Meta</th>
-                  <th>% Cumplimiento</th>
-                  <th>Notas</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-
+    <!-- Rendimiento por dependientx -->
+    <div class="section-container">
+      <h2 class="section-title">Rendimiento por dependientx (día seleccionado)</h2>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle" id="tablaResumenDependientes">
+          <thead class="table-light">
+            <tr>
+              <th>Dependientx</th>
+              <th>Sucursal</th>
+              <th class="text-end">Ventas día</th>
+              <th style="min-width: 190px;">Meta sucursal</th>
+              <th style="min-width: 190px;">Meta personal</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyResumenDependientes"></tbody>
+        </table>
       </div>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="assets/js/app.js"></script>
-  <script src="assets/js/rendimiento.js"></script>
+  <script src="assets/js/rendimiento_dependientx.js"></script>
 </body>
 </html>

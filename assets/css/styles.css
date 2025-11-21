@@ -23,21 +23,19 @@ body{font-family:'Calibri',Arial,sans-serif;background:#f7f7f8}
 .btn-toggle.off{filter:grayscale(1);opacity:.55}
 .btn-toggle.on{filter:none;opacity:1}
 
-/* Lista de sugerencias debajo del buscador */
+/* Lista de sugerencias debajo del buscador (por si reutilizas estilos) */
 #suggestions {
   max-height: 300px;
   overflow-y: auto;
   margin-top: .25rem;
 }
 
-/* Cada item: que no se vea aplastado ni cortado raro */
 #suggestions .list-group-item {
-  white-space: normal;       /* permite varias líneas */
+  white-space: normal;
   line-height: 1.4;
   padding: .35rem .75rem;
 }
 
-/* Item activo cuando navegas con flechas */
 #suggestions .list-group-item.active {
   font-weight: 600;
 }
@@ -52,7 +50,7 @@ body{font-family:'Calibri',Arial,sans-serif;background:#f7f7f8}
 /* Store select normal */
 .store-select{max-width:560px;width:100%}
 
-/* Scanner area */
+/* Scanner area (por compatibilidad con otras pantallas) */
 #scanWrap{display:none}
 #scanWrap.active{display:block}
 .scanner{position:relative;border:1.5px solid var(--ring);border-radius:12px;overflow:hidden}
@@ -60,55 +58,23 @@ body{font-family:'Calibri',Arial,sans-serif;background:#f7f7f8}
 .scan-overlay{position:absolute;inset:0;pointer-events:none;border:2px dashed rgba(255,255,255,.6)}
 .scan-msg{position:absolute;left:0;right:0;bottom:8px;text-align:center;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8)}
 
-/* ===== Dashboard rendimiento dependientxs ===== */
-
-.dashboard-cards{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
-  gap:14px;
-  margin-top:8px;
-}
-.dashboard-card{
-  padding:14px 16px;
-  border-radius:14px;
-  background:#ffffff;
-  border:1px solid #e9ecef;
-  box-shadow:0 4px 14px rgba(15,23,42,0.04);
-}
-.dashboard-card-title{
-  font-size:.85rem;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  color:#6c757d;
-  margin-bottom:6px;
-}
-.dashboard-card-value{
-  font-size:1.6rem;
-  font-weight:700;
-  color:#212529;
-}
-.dashboard-card-sub{
-  font-size:.85rem;
-  color:#6c757d;
-  margin-top:2px;
+/* Barras de progreso pequeñas para rendimiento */
+.progress-sm {
+  height: 0.9rem;
 }
 
-#tablaHistorico tbody tr:hover,
-#tablaDetalleDependiente tbody tr:hover{
-  background:#f1f3f5;
+.progress-xs {
+  height: 0.65rem;
 }
 
-.nav-tabs .nav-link{
-  border-radius:999px 999px 0 0;
-  padding:.45rem .9rem;
+.card-progress {
+  border-radius: 14px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
 }
 
-@media (max-width: 576px){
-  .nav-tabs{
-    flex-wrap:nowrap;
-    overflow-x:auto;
-  }
-  .nav-tabs .nav-link{
-    white-space:nowrap;
-  }
+/* Tabla más compacta en resumen */
+#tablaResumenDependientes td,
+#tablaResumenDependientes th {
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
 }
