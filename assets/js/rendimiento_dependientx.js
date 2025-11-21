@@ -192,13 +192,14 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  // ==== Lógica de filtrado y agregación ====
+  // ==== Lógica de filtrado y agregación (ACUMULADO) ====
   function registrosFiltrados() {
     const fechaSel = fechaInput.value || '';
     const sucSel = sucursalFiltro.value || 'TODAS';
 
     return registros.filter(r => {
-      const fechaOk = !fechaSel || r.fecha === fechaSel;
+      // Acumulado hasta la fechaSel (incluida)
+      const fechaOk = !fechaSel || (r.fecha && r.fecha <= fechaSel);
       const sucOk = sucSel === 'TODAS' || r.sucursal === sucSel;
       return fechaOk && sucOk;
     });
@@ -214,7 +215,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     registros.forEach(r => {
-      if (fechaSel && r.fecha !== fechaSel) return;
+      // Acumulado: ignorar SOLO lo que esté después de la fecha de corte
+      if (fechaSel && r.fecha && r.fecha > fechaSel) return;
+
       const suc = r.sucursal || '';
       const monto = parseMonto(r.monto);
       if (!totales.hasOwnProperty(suc)) {
@@ -389,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Agrupar por dependiente + sucursal (sin suponer relación entre columnas)
+    // Agrupar por dependiente + sucursal (una fila por combinación)
     const mapa = new Map(); // key: "dep|||suc" → { dependiente, sucursal, total }
 
     regs.forEach(r => {
@@ -453,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
             style="width:${pctPersMostrar}%" aria-valuenow="${pctPers.toFixed(1)}"
             aria-valuemin="0" aria-valuemax="100"></div>
         </div>
-        <div class="d-flex justify-content-between small">
+        <div class="d-flex justify-content_between small">
           <span>${metaPersonal > 0 ? pctPers.toFixed(1) + '% de meta' : 'Sin meta'}</span>
           <span>${metaPersonal > 0 ? formatCurrency(metaPersonal) : ''}</span>
         </div>
