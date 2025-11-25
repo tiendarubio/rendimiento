@@ -3,82 +3,108 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TRLista — Rendimiento dependientxs</title>
+  <title>TRLista — Rendimiento por dependientx</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
   <link href="assets/css/styles.css" rel="stylesheet">
 </head>
 <body>
-  <div class="container mt-3">
-    <img src="assets/img/trlogo.png" alt="Logo" class="logo">
+  <div class="container py-3">
+    <img src="assets/img/trlogo.png" alt="Logo" class="logo mb-2">
 
-    <!-- Encabezado -->
-    <div class="header-wrap mb-3">
-      <div class="text-center">
-        <h1 class="h4 mb-1">Rendimiento por dependientx</h1>
-        <div class="small text-muted">
-          Seguimiento acumulado del aporte a metas por sucursal y meta personal
-        </div>
-      </div>
-      <div id="lastSaved">Aún no guardado.</div>
+    <!-- Título y encabezado -->
+    <div class="header-wrap mb-3 text-center">
+      <h1 class="h4 mb-1">Rendimiento por dependientx</h1>
+      <p class="text-muted mb-1">
+        Panel para rankear y visualizar el aporte de cada dependientx a las metas por sucursal y meta personal.
+      </p>
+      <small id="lastSaved" class="text-muted">Aún no guardado.</small>
     </div>
 
-    <!-- Filtros de fecha y sucursal -->
+    <!-- Resumen superior -->
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-md-4">
+        <div class="summary-card h-100">
+          <div class="summary-label">Venta diaria (todas las sucursales)</div>
+          <div id="resumenVentaDia" class="summary-value">$0.00</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="summary-card h-100">
+          <div class="summary-label">Venta acumulada total</div>
+          <div id="resumenVentaTotal" class="summary-value">$0.00</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="summary-card h-100">
+          <div class="summary-label">Dependientxs con ventas registradas</div>
+          <div id="resumenNumeroDependientes" class="summary-value">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros y acciones -->
     <div class="section-container mb-3">
       <div class="row g-3 align-items-end">
         <div class="col-12 col-md-4">
-          <label for="fechaInput" class="form-label fw-bold mb-0">Fecha corte (incluida)</label>
+          <label for="fechaInput" class="form-label fw-semibold mb-0">Fecha corte (para venta diaria)</label>
           <input type="date" id="fechaInput" class="form-control">
+          <div id="diasConRegistros" class="mt-2 small"></div>
         </div>
         <div class="col-12 col-md-4">
-          <label for="sucursalFiltro" class="form-label fw-bold mb-0">Sucursal</label>
+          <label for="sucursalFiltro" class="form-label fw-semibold mb-0">Sucursal (para tablas)</label>
           <select id="sucursalFiltro" class="form-select">
             <option value="TODAS">Todas</option>
-            <!-- Sucursales se llenan dinámicamente desde la columna B -->
           </select>
         </div>
-        <div class="col-12 col-md-4 d-flex gap-2 mt-2 mt-md-0">
-          <button id="btnHoy" class="btn btn-outline-secondary flex-fill">
-            <i class="fa-regular fa-calendar"></i> Hoy
-          </button>
-          <button id="btnLimpiarRegistros" class="btn btn-outline-danger flex-fill">
-            <i class="fa-solid fa-trash"></i> Limpiar todo</button>
+        <div class="col-12 col-md-4">
+          <label class="form-label fw-semibold mb-0">Acciones</label>
+          <div class="d-flex flex-wrap gap-2 mt-1">
+            <button id="btnHoy" class="btn btn-outline-secondary flex-fill">
+              <i class="fa-regular fa-calendar"></i> Hoy
+            </button>
+            <button id="btnTotalesGenerales" class="btn btn-outline-info flex-fill">
+              <i class="fa-solid fa-calculator"></i> Totales
+            </button>
+            <button id="btnEstadoCuenta" class="btn btn-outline-primary flex-fill">
+              <i class="fa-solid fa-user-check"></i> Estado cuenta
+            </button>
+            <button id="btnLimpiarRegistros" class="btn btn-outline-danger flex-fill">
+              <i class="fa-solid fa-trash"></i> Limpiar todo
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Registro de ventas del día -->
+    <!-- Registro de venta diaria -->
     <div class="section-container mb-3">
       <h2 class="section-title">Registrar venta diaria</h2>
       <div class="row g-3 align-items-end">
         <div class="col-12 col-md-4">
           <label for="dependienteSelect" class="form-label mb-0">Dependientx</label>
-          <select id="dependienteSelect" class="form-select">
-            <!-- Se llena desde la columna A -->
-          </select>
+          <select id="dependienteSelect" class="form-select"></select>
         </div>
         <div class="col-12 col-md-4">
           <label for="sucursalSelect" class="form-label mb-0">Sucursal</label>
-          <select id="sucursalSelect" class="form-select">
-            <!-- Se llena desde la columna B -->
-          </select>
+          <select id="sucursalSelect" class="form-select"></select>
         </div>
-        <div class="col-12 col-md-3">
+        <div class="col-8 col-md-3">
           <label for="montoInput" class="form-label mb-0">Monto del día (USD)</label>
           <input id="montoInput" type="number" step="0.01" min="0" class="form-control" placeholder="0.00">
         </div>
-        <div class="col-12 col-md-1 d-grid">
+        <div class="col-4 col-md-1 d-grid">
           <button id="btnAgregarRegistro" class="btn btn-primary">
             <i class="fa-solid fa-plus"></i>
           </button>
         </div>
       </div>
 
-      <!-- Tabla de registros crudos (filtrados por fecha corte y sucursal) -->
+      <!-- Registros del día seleccionado -->
       <div class="mt-3">
-        <h3 class="h6 mb-2">Registros incluidos en el acumulado</h3>
+        <h3 class="h6 mb-2">Registros del día seleccionado</h3>
         <div class="table-responsive">
-          <table class="table table-sm table-bordered align-middle" id="tablaRegistros">
+          <table class="table table-sm table-striped table-hover align-middle">
             <thead class="table-light">
               <tr>
                 <th>Fecha</th>
@@ -94,26 +120,31 @@
       </div>
     </div>
 
-    <!-- Avance de meta por sucursal -->
+    <!-- Avance de meta por sucursal (acumulado, independiente de la fecha) -->
     <div class="section-container mb-3">
       <h2 class="section-title">Avance de meta por sucursal (acumulado)</h2>
-      <div id="storeSummary" class="row g-3">
-        <!-- Se llena dinámicamente -->
-      </div>
+      <p class="small text-muted mb-2">
+        Muestra el avance total de cada sucursal contra su meta, considerando todas las ventas registradas.
+      </p>
+      <div id="storeSummary" class="row g-3"></div>
     </div>
 
-    <!-- Rendimiento por dependientx -->
-    <div class="section-container">
+    <!-- Rendimiento por dependientx (acumulado, ranking) -->
+    <div class="section-container mb-3">
       <h2 class="section-title">Rendimiento por dependientx (acumulado)</h2>
+      <p class="small text-muted mb-2">
+        Ranking de dependientxs por sucursal, según el aporte acumulado a la meta de la sucursal y su meta personal.
+      </p>
       <div class="table-responsive">
-        <table class="table table-sm align-middle" id="tablaResumenDependientes">
+        <table class="table table-sm table-striped table-hover align-middle">
           <thead class="table-light">
             <tr>
+              <th style="width:60px;">#</th>
               <th>Dependientx</th>
               <th>Sucursal</th>
               <th class="text-end">Ventas acumuladas</th>
-              <th style="min-width: 190px;">Meta sucursal</th>
-              <th style="min-width: 190px;">Meta personal</th>
+              <th style="min-width: 260px;">Meta sucursal</th>
+              <th style="min-width: 200px;">Meta personal</th>
             </tr>
           </thead>
           <tbody id="tbodyResumenDependientes"></tbody>

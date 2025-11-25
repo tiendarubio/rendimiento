@@ -1,80 +1,84 @@
-/* Core styles */
+/* Core palette & layout */
 :root{
-  --ring:#e9ecef; --card:#ffffff; --muted:#6c757d;
-  --brand:#0d6efd; --ok:#198754; --warn:#ffc107; --danger:#dc3545;
+  --ring:#e9ecef;
+  --card:#ffffff;
+  --muted:#6c757d;
+  --brand:#0d6efd;
+  --ok:#198754;
+  --warn:#ffc107;
+  --danger:#dc3545;
 }
-body{font-family:'Calibri',Arial,sans-serif;background:#f7f7f8}
-.logo{max-width:160px;margin:12px auto;display:block}
-.section-container{padding:18px;border:1.5px solid var(--ring);border-radius:14px;margin-bottom:18px;background:var(--card)}
-.section-title{margin-bottom:12px;font-weight:700}
-
-.header-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
-.header-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center}
-.badge-store{display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;
-  font-size:1rem;font-weight:700;border:2px solid transparent}
-.badge-sexta{background:#fff2e2;border-color:#ffb74d;color:#b06a00}
-.badge-morazan{background:#e8f5e9;border-color:#66bb6a;color:#1b5e20}
-.badge-centro{background:#e3f2fd;border-color:#64b5f6;color:#0d47a1}
-#lastSaved{font-size:.95rem;color:#495057}
-
-.table-responsive{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.table thead th{white-space:nowrap}
-.btn-icon{min-width:44px}
-.btn-toggle.off{filter:grayscale(1);opacity:.55}
-.btn-toggle.on{filter:none;opacity:1}
-
-/* Lista de sugerencias debajo del buscador (por si reutilizas estilos) */
-#suggestions {
-  max-height: 300px;
-  overflow-y: auto;
-  margin-top: .25rem;
+body{
+  font-family:'Calibri',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:#f5f5f7;
 }
-
-#suggestions .list-group-item {
-  white-space: normal;
-  line-height: 1.4;
-  padding: .35rem .75rem;
+.logo{
+  max-width:160px;
+  display:block;
+  margin-left:auto;
+  margin-right:auto;
 }
-
-#suggestions .list-group-item.active {
-  font-weight: 600;
+.section-container{
+  padding:18px 16px;
+  border:1.5px solid var(--ring);
+  border-radius:14px;
+  margin-bottom:18px;
+  background:var(--card);
+}
+.section-title{
+  margin-bottom:8px;
+  font-weight:700;
+}
+.header-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
 }
 
-/* Toolbar */
-.toolbar{display:grid;grid-template-columns: repeat(4, minmax(120px,1fr));gap:10px}
-@media (max-width: 992px){ .toolbar{grid-template-columns: repeat(3, 1fr);} }
-@media (max-width: 576px){ .toolbar{grid-template-columns: repeat(2, 1fr);} }
-.toolbar .btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px;border-radius:10px;font-weight:600}
-.toolbar .btn i{font-size:1rem}
-
-/* Store select normal */
-.store-select{max-width:560px;width:100%}
-
-/* Scanner area (por compatibilidad con otras pantallas) */
-#scanWrap{display:none}
-#scanWrap.active{display:block}
-.scanner{position:relative;border:1.5px solid var(--ring);border-radius:12px;overflow:hidden}
-.scanner video{width:100%;height:auto;display:block;background:#000}
-.scan-overlay{position:absolute;inset:0;pointer-events:none;border:2px dashed rgba(255,255,255,.6)}
-.scan-msg{position:absolute;left:0;right:0;bottom:8px;text-align:center;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8)}
-
-/* Barras de progreso pequeñas para rendimiento */
-.progress-sm {
-  height: 0.9rem;
+/* Summary cards */
+.summary-card{
+  border-radius:14px;
+  border:1px solid var(--ring);
+  background:#ffffff;
+  padding:12px 14px;
+  box-shadow:0 2px 4px rgba(15,23,42,0.04);
+}
+.summary-label{
+  font-size:.85rem;
+  color:var(--muted);
+  margin-bottom:4px;
+}
+.summary-value{
+  font-size:1.25rem;
+  font-weight:700;
 }
 
-.progress-xs {
-  height: 0.65rem;
+/* Dias con registros */
+#diasConRegistros{
+  min-height:1.5rem;
+}
+#diasConRegistros .btn{
+  font-size:.75rem;
+  padding:0.1rem 0.35rem;
 }
 
-.card-progress {
-  border-radius: 14px;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+/* Progress bars */
+.progress-sm{
+  height:0.9rem;
+}
+.progress-xs{
+  height:0.65rem;
+}
+.card-progress{
+  border-radius:14px;
+  box-shadow:0 2px 6px rgba(15, 23, 42, 0.06);
 }
 
-/* Tabla más compacta en resumen */
-#tablaResumenDependientes td,
-#tablaResumenDependientes th {
-  padding-top: 0.35rem;
-  padding-bottom: 0.35rem;
+/* Tables */
+.table thead th{
+  white-space:nowrap;
+}
+.table-sm td, .table-sm th{
+  padding-top:.4rem;
+  padding-bottom:.4rem;
 }
