@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnHoy                   = $('btnHoy');
   const btnLimpiarRegistros      = $('btnLimpiarRegistros');
   const btnEstadoCuenta          = $('btnEstadoCuenta');
-  const btnTotalesGenerales      = $('btnTotalesGenerales');
   const tbodyRegistros           = $('tbodyRegistros');
   const storeSummary             = $('storeSummary');
   const tbodyResumenDependientes = $('tbodyResumenDependientes');
@@ -36,6 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let registros = [];
   let lastUpdateISO = null;
+
+  let fpInstance = null;
+  let fechasConRegistro = new Set();
 
   function hoyISO(){
     const d = new Date();
@@ -74,7 +76,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function setFechaHoy(){
-    fechaInput.value = hoyISO();
+    const today = hoyISO();
+    fechaInput.value = today;
+    if (fpInstance){
+      fpInstance.setDate(today, false);
+    }
   }
 
   function llenarCombosDesdeConfig(){
@@ -145,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
       meta: { updatedAt: new Date().toISOString() },
       registros
     };
-    return saveToBin(RENIMIENTO_BIN_ID = RENDIMIENTO_BIN_ID, payload)
+    return saveToBin(RENDIMIENTO_BIN_ID, payload)
       .then(() => {
         lastUpdateISO = payload.meta.updatedAt;
         actualizarLastSaved();
@@ -153,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function cargarRegistros(){
-    return loadFromBin(RENIMIENTO_BIN_ID = RENDIMIENTO_BIN_ID);
+    return loadFromBin(RENDIMIENTO_BIN_ID);
   }
 
   // ---- Utilidades de cálculo ----
@@ -169,7 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Totales por sucursal acumulados (toda la historia)
   function totalesPorSucursalAcumulado(){
     const res = {};
     registros.forEach(r => {
@@ -182,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return res;
   }
 
-  // Totales por sucursal para un día específico
   function totalesDiariosPorSucursal(fechaDia){
     const res = {};
     if (!fechaDia) return res;
@@ -197,9 +201,21 @@ document.addEventListener('DOMContentLoaded', () => {
     return res;
   }
 
+  function totalesPorDependienteGlobal(){
+    const res = {};
+    registros.forEach(r => {
+      if (!r.dependiente) return;
+      const dep = r.dependiente;
+      const monto = parseMonto(r.monto);
+      res[dep] = (res[dep] || 0) + monto;
+    });
+    return res;
+  }
+
   function calcularTotalesGenerales(){
     const fechaSel = fechaInput.value || '';
     let totalDia   = 0;
+
     const totAcumSucursal = totalesPorSucursalAcumulado();
     let totalAcum = 0;
     Object.values(totAcumSucursal).forEach(v => { totalAcum += v; });
@@ -222,7 +238,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!r.fecha || !r.dependiente) return;
       const monto = parseMonto(r.monto);
       const dep   = r.dependiente;
-      let info    = mapa.get(dep);
+
+      if (fechaSel && r.fecha > fechaSel) return;
+
+      let info = mapa.get(dep);
       if (!info){
         info = { dependiente:dep, totalDia:0, totalAcum:0 };
       }
@@ -233,6 +252,22 @@ document.addEventListener('DOMContentLoaded', () => {
       mapa.set(dep, info);
     });
     return Array.from(mapa.values());
+  }
+
+  function registrosPorDependiente(fechaCorte){
+    const mapa = new Map();
+    registros.forEach(r => {
+      if (!r.dependiente || !r.fecha) return;
+      if (fechaCorte && r.fecha > fechaCorte) return;
+      const dep = r.dependiente;
+      let arr = mapa.get(dep);
+      if (!arr){
+        arr = [];
+        mapa.set(dep, arr);
+      }
+      arr.push(r);
+    });
+    return mapa;
   }
 
   function renderTablaRegistros(){
@@ -279,45 +314,24 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderDiasConRegistros(){
     const cont = document.getElementById('diasConRegistros');
     if (!cont) return;
-    cont.innerHTML = '';
-    if (!registros.length){
-      cont.innerHTML = '<span class="text-muted">Sin registros aún.</span>';
-      return;
-    }
-    const setFechas = new Set();
+
+    fechasConRegistro = new Set();
     registros.forEach(r => {
-      if (r.fecha) setFechas.add(r.fecha);
+      if (r.fecha) fechasConRegistro.add(r.fecha);
     });
-    const fechas = Array.from(setFechas).sort();
-    if (!fechas.length){
-      cont.innerHTML = '<span class="text-muted">Sin registros aún.</span>';
-      return;
+
+    cont.textContent = 'Los días con un punto azul tienen ventas registradas.';
+
+    if (fpInstance){
+      fpInstance.redraw();
     }
-    const fechaSel = fechaInput.value || '';
-    const frag = document.createDocumentFragment();
-    const label = document.createElement('div');
-    label.className = 'mb-1';
-    label.textContent = 'Días con registros:';
-    frag.appendChild(label);
-    fechas.forEach(f => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'btn btn-sm me-1 mb-1 ' + (f === fechaSel ? 'btn-primary' : 'btn-outline-secondary');
-      btn.textContent = f;
-      btn.addEventListener('click', () => {
-        fechaInput.value = f;
-        recomputarTodo();
-      });
-      frag.appendChild(btn);
-    });
-    cont.appendChild(frag);
   }
 
   function renderStoreSummary(){
     storeSummary.innerHTML = '';
     const fechaSel = fechaInput.value || '';
-    const totalesAcum = totalesPorSucursalAcumulado();        // SIEMPRE acumulado (toda la historia)
-    const totalesDia  = totalesDiariosPorSucursal(fechaSel); // Solo para Mostrar venta diaria por sucursal
+    const totalesAcum = totalesPorSucursalAcumulado();
+    const totalesDia  = totalesDiariosPorSucursal(fechaSel);
 
     const frag = document.createDocumentFragment();
     config.sucursales.forEach(suc => {
@@ -351,65 +365,74 @@ document.addEventListener('DOMContentLoaded', () => {
     storeSummary.appendChild(frag);
   }
 
+  // NUEVO: tabla 1 fila por dependientx, sucursales solo texto, barra global en meta personal
   function renderResumenDependientes(){
     tbodyResumenDependientes.innerHTML = '';
     if (!registros.length) return;
 
     const sucSel = sucursalFiltro.value || 'TODAS';
-    const totalesSucursalAcum = totalesPorSucursalAcumulado();
 
-    // Agregamos total por dependientx + sucursal (acumulado, independiente de la fecha)
-    const mapa = new Map(); // key: dep||suc
+    const sucList = ['Avenida Morazán','Sexta Calle','Centro Comercial'];
+
+    const perDep = {};
+
     registros.forEach(r => {
       if (!r.dependiente || !r.sucursal) return;
+      if (!sucList.includes(r.sucursal)) return;
+
       if (sucSel !== 'TODAS' && r.sucursal !== sucSel) return;
-      const key   = r.dependiente + '||' + r.sucursal;
+
+      const dep = r.dependiente;
       const monto = parseMonto(r.monto);
-      const actual = mapa.get(key) || 0;
-      mapa.set(key, actual + monto);
+
+      if (!perDep[dep]){
+        perDep[dep] = {
+          dependiente: dep,
+          ventasGlobal: 0,
+          porSucursal: {
+            'Avenida Morazán': 0,
+            'Sexta Calle': 0,
+            'Centro Comercial': 0
+          }
+        };
+      }
+      perDep[dep].ventasGlobal += monto;
+      perDep[dep].porSucursal[r.sucursal] += monto;
     });
 
-    const rows = [];
-    mapa.forEach((total, key) => {
-      const [dep, suc] = key.split('||');
-      const sucTotal   = totalesSucursalAcum[suc] || 0;
-      rows.push({ dependiente:dep, sucursal:suc, total, sucTotal });
-    });
-
-    // Ranking: ordenar por ventas acumuladas desc
-    rows.sort((a,b) => b.total - a.total);
-
-    const frag = document.createDocumentFragment();
+    const totalesPersonalGlobal = totalesPorDependienteGlobal();
     const metaPersonalGlobal = config.metaPersonal || 0;
 
-    rows.forEach((row, idx) => {
-      const dep   = row.dependiente;
-      const suc   = row.sucursal;
-      const total = row.total;
-      const sucTotal = row.sucTotal;
+    const rows = Object.values(perDep);
+    rows.sort((a,b) => b.ventasGlobal - a.ventasGlobal);
 
-      const metaSucursal = config.metasSucursal[suc] || 0;
-      const metaPersonal = metaPersonalGlobal;
+    const frag = document.createDocumentFragment();
 
-      let pctDepGoal   = 0;
-      let pctRestoGoal = 0;
-      let pctTotalSuc  = 0;
+    function buildSucursalTextCell(row, sucName){
+      const montoSuc = row.porSucursal[sucName] || 0;
+      const metaSuc  = config.metasSucursal[sucName] || 0;
+      const pctMeta  = metaSuc > 0 ? (montoSuc / metaSuc) * 100 : 0;
 
-      if (metaSucursal > 0){
-        pctDepGoal   = (total / metaSucursal) * 100;
-        const resto  = Math.max(sucTotal - total, 0);
-        pctRestoGoal = (resto / metaSucursal) * 100;
-        pctTotalSuc  = (sucTotal / metaSucursal) * 100;
+      if (metaSuc <= 0 && montoSuc === 0){
+        return `<td class="text-muted small text-center">—</td>`;
       }
 
-      // Ancho de barra (limitado a 100%)
-      let depWidth   = Math.max(0, Math.min(pctDepGoal, 100));
-      let restoWidth = Math.max(0, Math.min(pctRestoGoal, 100 - depWidth));
+      return `
+        <td>
+          <div class="small fw-semibold">${formatCurrency(montoSuc)}</div>
+          <div class="small text-muted">${pctMeta.toFixed(1)}% de meta sucursal</div>
+        </td>
+      `;
+    }
 
-      // Meta personal
+    rows.forEach((row, idx) => {
+      const dep = row.dependiente;
+      const ventasGlobal = row.ventasGlobal;
+
+      const totalPersonalGlobal = totalesPersonalGlobal[dep] || 0;
       let pctPersonal = 0;
-      if (metaPersonal > 0){
-        pctPersonal = (total / metaPersonal) * 100;
+      if (metaPersonalGlobal > 0){
+        pctPersonal = (totalPersonalGlobal / metaPersonalGlobal) * 100;
       }
       const pctPersonalClamped = Math.min(Math.max(pctPersonal, 0), 100);
 
@@ -417,24 +440,17 @@ document.addEventListener('DOMContentLoaded', () => {
       tr.innerHTML = `
         <td>${idx+1}</td>
         <td>${dep}</td>
-        <td>${suc}</td>
-        <td class="text-end">${formatCurrency(total)}</td>
-        <td>
-          <div class="progress progress-xs mb-1">
-            <div class="progress-bar bg-primary" style="width:${depWidth.toFixed(1)}%"></div>
-            <div class="progress-bar bg-light text-dark" style="width:${restoWidth.toFixed(1)}%"></div>
-          </div>
-          <div class="small text-muted">
-            Tú: ${pctDepGoal.toFixed(1)}% &mdash; Resto: ${pctRestoGoal.toFixed(1)}%<br>
-            Avance total sucursal: ${pctTotalSuc.toFixed(1)}%
-          </div>
-        </td>
+        ${buildSucursalTextCell(row, 'Avenida Morazán')}
+        ${buildSucursalTextCell(row, 'Sexta Calle')}
+        ${buildSucursalTextCell(row, 'Centro Comercial')}
+        <td class="text-end">${formatCurrency(ventasGlobal)}</td>
         <td>
           <div class="progress progress-xs mb-1">
             <div class="progress-bar ${barClassSegunPorcentaje(pctPersonal)}" style="width:${pctPersonalClamped.toFixed(1)}%"></div>
           </div>
           <div class="small text-muted">
-            ${pctPersonal.toFixed(1)}% de meta personal (${formatCurrency(metaPersonal)})
+            ${pctPersonal.toFixed(1)}% de meta personal global (${formatCurrency(metaPersonalGlobal)})<br>
+            Ventas globales: ${formatCurrency(totalPersonalGlobal)}
           </div>
         </td>
       `;
@@ -445,7 +461,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function actualizarResumenTop(){
-    const fechaSel = fechaInput.value || '';
     const { totalDia, totalAcum } = calcularTotalesGenerales();
 
     const depActivos = new Set();
@@ -466,6 +481,108 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTablaRegistros();
     renderStoreSummary();
     renderResumenDependientes();
+  }
+
+  function initDatePicker(){
+    if (typeof flatpickr === 'undefined') return;
+    fpInstance = flatpickr(fechaInput, {
+      dateFormat:'Y-m-d',
+      defaultDate: fechaInput.value || hoyISO(),
+      onChange: (selectedDates, dateStr) => {
+        fechaInput.value = dateStr;
+        recomputarTodo();
+      },
+      onDayCreate: (dObj, dStr, fp, dayElem) => {
+        try{
+          const dateObj = dayElem.dateObj;
+          if (!dateObj) return;
+          const y = dateObj.getFullYear();
+          const m = String(dateObj.getMonth()+1).padStart(2,'0');
+          const d = String(dateObj.getDate()).padStart(2,'0');
+          const iso = `${y}-${m}-${d}`;
+          if (fechasConRegistro.has(iso)){
+            dayElem.classList.add('has-record');
+          }
+        }catch(e){}
+      }
+    });
+  }
+
+  function generarPdfEstadoCuenta(data, fechaSel){
+    if (!window.jspdf || !window.jspdf.jsPDF || !data || !data.length) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const fechaTitulo = fechaSel || 'todas las fechas';
+    const mapaRegistros = registrosPorDependiente(fechaSel);
+    const metaPersonal = config.metaPersonal || 0;
+
+    data.forEach((d, index) => {
+      if (index > 0){
+        doc.addPage();
+      }
+
+      const movimientos = mapaRegistros.get(d.dependiente) || [];
+
+      // Encabezado tipo estado de cuenta
+      doc.setFontSize(12);
+      doc.text('TRLista — Estado de cuenta', 105, 12, { align:'center' });
+      doc.setFontSize(10);
+      doc.text(`Dependientx: ${d.dependiente}`, 14, 20);
+      doc.text(`Fecha corte: ${fechaTitulo}`, 14, 26);
+
+      // Resumen tipo banco
+      const pctMetaPersonal = metaPersonal > 0 ? (d.totalAcum / metaPersonal) * 100 : 0;
+
+      doc.setDrawColor(180);
+      doc.setLineWidth(0.2);
+      doc.rect(14, 30, 182, 18);
+
+      doc.setFontSize(9);
+      doc.text(`Venta diaria: ${formatCurrency(d.totalDia)}`, 18, 36);
+      doc.text(`Venta acumulada: ${formatCurrency(d.totalAcum)}`, 18, 42);
+      if (metaPersonal > 0){
+        doc.text(`Meta personal: ${formatCurrency(metaPersonal)}`, 105, 36);
+        doc.text(`Avance meta personal: ${pctMetaPersonal.toFixed(1)}%`, 105, 42);
+      } else {
+        doc.text('Meta personal: no definida', 105, 36);
+      }
+
+      // Detalle de movimientos
+      let startY = 54;
+      doc.setFontSize(10);
+      doc.text('Detalle de movimientos', 14, 50);
+
+      if (movimientos.length && typeof doc.autoTable === 'function'){
+        const rows = movimientos.map(r => [
+          r.fecha,
+          r.sucursal || '',
+          (parseMonto(r.monto) || 0).toFixed(2)
+        ]);
+        doc.autoTable({
+          startY,
+          head: [['Fecha', 'Sucursal', 'Monto (USD)']],
+          body: rows,
+          styles: { fontSize: 9 },
+          headStyles: { fillColor: [240, 240, 240], textColor: 0, lineWidth: 0.1 },
+          theme: 'grid'
+        });
+      } else if (movimientos.length){
+        let y = startY;
+        doc.setFontSize(9);
+        movimientos.forEach(r => {
+          doc.text(`${r.fecha}  ${r.sucursal || ''}  $${(parseMonto(r.monto) || 0).toFixed(2)}`, 14, y);
+          y += 4;
+        });
+      } else {
+        doc.setFontSize(9);
+        doc.text('Sin movimientos en el período.', 14, startY);
+      }
+    });
+
+    const fileFecha = (fechaSel || 'todas').replace(/[^0-9]/g,'') || 'todas';
+    const fileName = `EstadoCuentaDependientxs_${fileFecha}.pdf`;
+    doc.save(fileName);
   }
 
   // ---- Eventos UI ----
@@ -517,70 +634,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  btnTotalesGenerales.addEventListener('click', () => {
-    const { totalDia, totalAcum } = calcularTotalesGenerales();
-    const fechaSel = fechaInput.value || '(toda la historia)';
-    Swal.fire({
-      title:'Totales generales',
-      html: `
-        <p class="mb-1"><strong>Fecha seleccionada:</strong> ${fechaSel}</p>
-        <p class="mb-1"><strong>Suma venta diaria:</strong> ${formatCurrency(totalDia)}</p>
-        <p class="mb-0"><strong>Suma total acumulada:</strong> ${formatCurrency(totalAcum)}</p>
-      `,
-      icon:'info'
-    });
-  });
-
   btnEstadoCuenta.addEventListener('click', () => {
     const data = calcularEstadoCuentaDependientes();
     if (!data.length){
       Swal.fire('Estado de cuenta','No hay registros para mostrar.','info');
       return;
     }
-    const fechaSel = fechaInput.value || '(toda la historia)';
-    let rowsHtml = '';
-    data.forEach(d => {
-      rowsHtml += `
-        <tr>
-          <td>${d.dependiente}</td>
-          <td class="text-end">${formatCurrency(d.totalDia)}</td>
-          <td class="text-end">${formatCurrency(d.totalAcum)}</td>
-        </tr>
-      `;
-    });
-    Swal.fire({
-      title:'Estado de cuenta por dependientx',
-      width:700,
-      html: `
-        <div class="text-start mb-2">
-          <small>Fecha corte: <strong>${fechaSel}</strong></small>
-        </div>
-        <div class="table-responsive" style="max-height:320px; overflow-y:auto;">
-          <table class="table table-sm">
-            <thead>
-              <tr>
-                <th>Dependientx</th>
-                <th class="text-end">Venta diaria</th>
-                <th class="text-end">Venta acumulada</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml}
-            </tbody>
-          </table>
-        </div>
-      `,
-      icon:'info'
-    });
+    const fechaCorte = fechaInput.value || '';
+    generarPdfEstadoCuenta(data, fechaCorte);
   });
 
   // ---- Init ----
   (async function init(){
     setFechaHoy();
     await cargarConfigDependientxs();
-    const rec = await loadFromBin(RENIMIENTO_BIN_ID = RENDIMIENTO_BIN_ID);
+    initDatePicker();
+
+    const rec = await cargarRegistros();
     if (rec && Array.isArray(rec.registros)){
-      registros    = rec.registros;
+      registros     = rec.registros;
       lastUpdateISO = rec.meta?.updatedAt || null;
     } else {
       registros = [];

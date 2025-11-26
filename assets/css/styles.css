@@ -53,13 +53,16 @@ body{
   font-weight:700;
 }
 
-/* Dias con registros */
-#diasConRegistros{
-  min-height:1.5rem;
+/* Subcards inside panel */
+.subcard{
+  border-radius:12px;
+  border:1px solid var(--ring);
+  background:#fff;
 }
-#diasConRegistros .btn{
-  font-size:.75rem;
-  padding:0.1rem 0.35rem;
+
+/* Legend below calendar */
+#diasConRegistros{
+  min-height:1.4rem;
 }
 
 /* Progress bars */
@@ -81,4 +84,20 @@ body{
 .table-sm td, .table-sm th{
   padding-top:.4rem;
   padding-bottom:.4rem;
+}
+
+/* Mark days with records in flatpickr */
+.flatpickr-day.has-record{
+  position:relative;
+}
+.flatpickr-day.has-record::after{
+  content:'';
+  position:absolute;
+  bottom:0.25rem;
+  left:50%;
+  transform:translateX(-50%);
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:#0d6efd;
 }

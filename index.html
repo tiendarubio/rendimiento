@@ -6,6 +6,7 @@
   <title>TRLista — Rendimiento por dependientx</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
   <link href="assets/css/styles.css" rel="stylesheet">
 </head>
 <body>
@@ -43,84 +44,95 @@
       </div>
     </div>
 
-    <!-- Filtros y acciones -->
+    <!-- Panel de control -->
     <div class="section-container mb-3">
-      <div class="row g-3 align-items-end">
-        <div class="col-12 col-md-4">
-          <label for="fechaInput" class="form-label fw-semibold mb-0">Fecha corte (para venta diaria)</label>
-          <input type="date" id="fechaInput" class="form-control">
-          <div id="diasConRegistros" class="mt-2 small"></div>
+      <h2 class="section-title">Panel de control</h2>
+      <div class="row g-3">
+        <!-- Filtros -->
+        <div class="col-12 col-lg-6">
+          <div class="subcard p-2">
+            <div class="row g-3 align-items-end">
+              <div class="col-12 col-md-6">
+                <label for="fechaInput" class="form-label fw-semibold mb-0">Fecha corte (venta diaria)</label>
+                <input type="text" id="fechaInput" class="form-control" placeholder="Selecciona una fecha">
+                <div id="diasConRegistros" class="mt-1 small text-muted">
+                  Los días con un punto azul tienen ventas registradas.
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label for="sucursalFiltro" class="form-label fw-semibold mb-0">Sucursal (para tablas)</label>
+                <select id="sucursalFiltro" class="form-select">
+                  <option value="TODAS">Todas</option>
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="col-12 col-md-4">
-          <label for="sucursalFiltro" class="form-label fw-semibold mb-0">Sucursal (para tablas)</label>
-          <select id="sucursalFiltro" class="form-select">
-            <option value="TODAS">Todas</option>
-          </select>
+
+        <!-- Acciones -->
+        <div class="col-12 col-lg-6">
+          <div class="subcard p-2">
+            <label class="form-label fw-semibold mb-1">Acciones rápidas</label>
+            <div class="d-flex flex-wrap gap-2">
+              <button id="btnHoy" class="btn btn-outline-secondary flex-fill">
+                <i class="fa-regular fa-calendar"></i> Hoy
+              </button>
+              <button id="btnEstadoCuenta" class="btn btn-outline-primary flex-fill">
+                <i class="fa-solid fa-file-pdf"></i> Estado de cuenta
+              </button>
+              <button id="btnLimpiarRegistros" class="btn btn-outline-danger flex-fill">
+                <i class="fa-solid fa-trash"></i> Limpiar todo
+              </button>
+            </div>
+          </div>
         </div>
-        <div class="col-12 col-md-4">
-          <label class="form-label fw-semibold mb-0">Acciones</label>
-          <div class="d-flex flex-wrap gap-2 mt-1">
-            <button id="btnHoy" class="btn btn-outline-secondary flex-fill">
-              <i class="fa-regular fa-calendar"></i> Hoy
-            </button>
-            <button id="btnTotalesGenerales" class="btn btn-outline-info flex-fill">
-              <i class="fa-solid fa-calculator"></i> Totales
-            </button>
-            <button id="btnEstadoCuenta" class="btn btn-outline-primary flex-fill">
-              <i class="fa-solid fa-user-check"></i> Estado cuenta
-            </button>
-            <button id="btnLimpiarRegistros" class="btn btn-outline-danger flex-fill">
-              <i class="fa-solid fa-trash"></i> Limpiar todo
+      </div>
+
+      <!-- Registro de venta diaria -->
+      <div class="mt-3 subcard p-2">
+        <h3 class="h6 mb-2">Registrar venta diaria</h3>
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-lg-4">
+            <label for="dependienteSelect" class="form-label mb-0">Dependientx</label>
+            <select id="dependienteSelect" class="form-select"></select>
+          </div>
+          <div class="col-12 col-lg-4">
+            <label for="sucursalSelect" class="form-label mb-0">Sucursal</label>
+            <select id="sucursalSelect" class="form-select"></select>
+          </div>
+          <div class="col-8 col-lg-3">
+            <label for="montoInput" class="form-label mb-0">Monto del día (USD)</label>
+            <input id="montoInput" type="number" step="0.01" min="0" class="form-control" placeholder="0.00">
+          </div>
+          <div class="col-4 col-lg-1 d-grid">
+            <button id="btnAgregarRegistro" class="btn btn-primary">
+              <i class="fa-solid fa-plus"></i>
             </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Registro de venta diaria -->
+    <!-- Registros del día seleccionado -->
     <div class="section-container mb-3">
-      <h2 class="section-title">Registrar venta diaria</h2>
-      <div class="row g-3 align-items-end">
-        <div class="col-12 col-md-4">
-          <label for="dependienteSelect" class="form-label mb-0">Dependientx</label>
-          <select id="dependienteSelect" class="form-select"></select>
-        </div>
-        <div class="col-12 col-md-4">
-          <label for="sucursalSelect" class="form-label mb-0">Sucursal</label>
-          <select id="sucursalSelect" class="form-select"></select>
-        </div>
-        <div class="col-8 col-md-3">
-          <label for="montoInput" class="form-label mb-0">Monto del día (USD)</label>
-          <input id="montoInput" type="number" step="0.01" min="0" class="form-control" placeholder="0.00">
-        </div>
-        <div class="col-4 col-md-1 d-grid">
-          <button id="btnAgregarRegistro" class="btn btn-primary">
-            <i class="fa-solid fa-plus"></i>
-          </button>
-        </div>
-      </div>
-
-      <!-- Registros del día seleccionado -->
-      <div class="mt-3">
-        <h3 class="h6 mb-2">Registros del día seleccionado</h3>
-        <div class="table-responsive">
-          <table class="table table-sm table-striped table-hover align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Fecha</th>
-                <th>Dependientx</th>
-                <th>Sucursal</th>
-                <th class="text-end">Monto</th>
-                <th class="text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="tbodyRegistros"></tbody>
-          </table>
-        </div>
+      <h2 class="section-title">Registros del día seleccionado</h2>
+      <div class="table-responsive">
+        <table class="table table-sm table-striped table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Fecha</th>
+              <th>Dependientx</th>
+              <th>Sucursal</th>
+              <th class="text-end">Monto</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyRegistros"></tbody>
+        </table>
       </div>
     </div>
 
-    <!-- Avance de meta por sucursal (acumulado, independiente de la fecha) -->
+    <!-- Avance de meta por sucursal (acumulado) -->
     <div class="section-container mb-3">
       <h2 class="section-title">Avance de meta por sucursal (acumulado)</h2>
       <p class="small text-muted mb-2">
@@ -133,7 +145,7 @@
     <div class="section-container mb-3">
       <h2 class="section-title">Rendimiento por dependientx (acumulado)</h2>
       <p class="small text-muted mb-2">
-        Ranking de dependientxs por sucursal, según el aporte acumulado a la meta de la sucursal y su meta personal.
+        1 fila por dependientx: aporte a cada sucursal y avance de meta personal (suma de todas las sucursales).
       </p>
       <div class="table-responsive">
         <table class="table table-sm table-striped table-hover align-middle">
@@ -141,10 +153,11 @@
             <tr>
               <th style="width:60px;">#</th>
               <th>Dependientx</th>
-              <th>Sucursal</th>
-              <th class="text-end">Ventas acumuladas</th>
-              <th style="min-width: 260px;">Meta sucursal</th>
-              <th style="min-width: 200px;">Meta personal</th>
+              <th>Avenida Morazán</th>
+              <th>Sexta Calle</th>
+              <th>Centro Comercial</th>
+              <th class="text-end">Total global</th>
+              <th style="min-width: 220px;">Meta personal (global)</th>
             </tr>
           </thead>
           <tbody id="tbodyResumenDependientes"></tbody>
@@ -153,6 +166,9 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="assets/js/app.js"></script>
   <script src="assets/js/rendimiento_dependientx.js"></script>
