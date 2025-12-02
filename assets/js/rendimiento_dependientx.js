@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const montoInput               = $('montoInput');
   const btnAgregar               = $('btnAgregarRegistro');
   const btnHoy                   = $('btnHoy');
+  const btnCorteMes              = $('btnCorteMes');
   const btnLimpiarRegistros      = $('btnLimpiarRegistros');
   const btnEstadoCuenta          = $('btnEstadoCuenta');
   const tbodyRegistros           = $('tbodyRegistros');
@@ -21,6 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const resumenNumeroDependientes= $('resumenNumeroDependientes');
 
   const RENDIMIENTO_BIN_ID = '691cce12d0ea881f40f0a29a';
+
+  let ultimoCorte = null;
+  let metasUltimoCorte = null;
 
   let config = {
     dependientes: [],
@@ -148,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function guardarRegistros(){
     const payload = {
-      meta: { updatedAt: new Date().toISOString() },
+      meta: { updatedAt: new Date().toISOString(), ultimoCorte, metasUltimoCorte },
       registros
     };
     return saveToBin(RENDIMIENTO_BIN_ID, payload)
@@ -160,6 +164,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function cargarRegistros(){
     return loadFromBin(RENDIMIENTO_BIN_ID);
+  }
+
+  // ---- Utilidades de fecha para cortes mensuales ----
+  function parseISODate(str){
+    if (!str) return null;
+    const parts = str.split('-');
+    if (parts.length !== 3) return null;
+    const y = parseInt(parts[0],10);
+    const m = parseInt(parts[1],10);
+    const d = parseInt(parts[2],10);
+    if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
+    return new Date(y, m-1, d);
+  }
+
+  function ultimoDiaMes(dateObj){
+    const y = dateObj.getFullYear();
+    const m = dateObj.getMonth();
+    return new Date(y, m+1, 0);
+  }
+
+  function datosMesDesdeFechaStr(fechaStr){
+    let base = parseISODate(fechaStr);
+    if (!base){
+      base = new Date();
+    }
+    return { year: base.getFullYear(), month: base.getMonth()+1 };
+  }
+
+  function mesAnterior(year, month){
+    if (month === 1){
+      return { year: year-1, month: 12 };
+    }
+    return { year, month: month-1 };
   }
 
   // ---- Utilidades de cálculo ----
@@ -175,10 +212,80 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function totalesPorSucursalAcumulado(){
+  function esRegistroVigente(r){
+    if (!r || !r.fecha) return false;
+
+    const fechaSel = (typeof fechaInput !== 'undefined' && fechaInput && fechaInput.value)
+      ? fechaInput.value
+      : '';
+
+    // Si nunca se ha hecho corte
+    if (!ultimoCorte){
+      // Si no hay fecha seleccionada, cuenta todo
+      if (!fechaSel) return true;
+      // Si hay fecha seleccionada, cuenta todo hasta esa fecha
+      return r.fecha <= fechaSel;
+    }
+
+    // Con corte definido
+    if (!fechaSel){
+      // Sin fecha seleccionada: consideramos sólo registros posteriores al corte
+      return r.fecha > ultimoCorte;
+    }
+
+    if (fechaSel <= ultimoCorte){
+      // Estamos consultando una fecha en el periodo ANTES del corte:
+      // se comporta como si no existiera corte, acumulando hasta esa fecha
+      return r.fecha <= fechaSel;
+    } else {
+      // Estamos consultando una fecha DESPUÉS del corte:
+      // sólo importa lo posterior al corte y hasta la fecha seleccionada
+      if (r.fecha <= ultimoCorte) return false;
+      return r.fecha <= fechaSel;
+    }
+  }
+
+  
+  function getMetasContextuales(){
+    const fechaSel = (typeof fechaInput !== 'undefined' && fechaInput && fechaInput.value)
+      ? fechaInput.value
+      : '';
+
+    // Si no hay corte o no hay snapshot, usamos siempre las metas actuales
+    if (!ultimoCorte || !metasUltimoCorte){
+      return {
+        metasSucursal: config.metasSucursal,
+        metaPersonal: config.metaPersonal
+      };
+    }
+
+    // Si no hay fecha seleccionada, asumimos contexto actual (después del corte)
+    if (!fechaSel){
+      return {
+        metasSucursal: config.metasSucursal,
+        metaPersonal: config.metaPersonal
+      };
+    }
+
+    if (fechaSel <= ultimoCorte){
+      // Consultando histórico antes (o en) el corte: usamos las metas del momento del corte
+      return {
+        metasSucursal: metasUltimoCorte.metasSucursal || config.metasSucursal,
+        metaPersonal: (metasUltimoCorte.metaPersonal ?? config.metaPersonal)
+      };
+    }
+
+    // Consultando fechas posteriores al corte: usamos metas actuales
+    return {
+      metasSucursal: config.metasSucursal,
+      metaPersonal: config.metaPersonal
+    };
+  }
+
+function totalesPorSucursalAcumulado(){
     const res = {};
     registros.forEach(r => {
-      if (!r.fecha || !r.sucursal) return;
+      if (!esRegistroVigente(r) || !r.sucursal) return;
       const suc = r.sucursal;
       const monto = parseMonto(r.monto);
       if (!res[suc]) res[suc] = 0;
@@ -201,10 +308,28 @@ document.addEventListener('DOMContentLoaded', () => {
     return res;
   }
 
+  function totalesPorSucursalMes(year, month){
+    const res = {};
+    registros.forEach(r => {
+      if (!r.fecha || !r.sucursal) return;
+      const d = parseISODate(r.fecha);
+      if (!d) return;
+      const y = d.getFullYear();
+      const m = d.getMonth()+1;
+      if (y === year && m === month){
+        const suc = r.sucursal;
+        const monto = parseMonto(r.monto);
+        if (!res[suc]) res[suc] = 0;
+        res[suc] += monto;
+      }
+    });
+    return res;
+  }
+
   function totalesPorDependienteGlobal(){
     const res = {};
     registros.forEach(r => {
-      if (!r.dependiente) return;
+      if (!esRegistroVigente(r) || !r.dependiente) return;
       const dep = r.dependiente;
       const monto = parseMonto(r.monto);
       res[dep] = (res[dep] || 0) + monto;
@@ -330,17 +455,41 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderStoreSummary(){
     storeSummary.innerHTML = '';
     const fechaSel = fechaInput.value || '';
+
+    // Totales globales (funcionalidad actual)
     const totalesAcum = totalesPorSucursalAcumulado();
     const totalesDia  = totalesDiariosPorSucursal(fechaSel);
 
+    // Totales por mes (mes actual vs mes anterior) para comparativo discreto
+    const { year, month } = datosMesDesdeFechaStr(fechaSel || hoyISO());
+    const { year: yearPrev, month: monthPrev } = mesAnterior(year, month);
+
+    const totMesActual   = totalesPorSucursalMes(year, month);
+    const totMesAnterior = totalesPorSucursalMes(yearPrev, monthPrev);
+
     const frag = document.createDocumentFragment();
+    const metasCtx1 = getMetasContextuales();
+    const metasSuc1 = metasCtx1.metasSucursal || {};
     config.sucursales.forEach(suc => {
-      const meta       = config.metasSucursal[suc] || 0;
+      const meta       = metasSuc1[suc] || 0;
       const totalAcum  = totalesAcum[suc] || 0;
       const totalDia   = totalesDia[suc] || 0;
       const pctAcum    = meta > 0 ? (totalAcum / meta) * 100 : 0;
       const pctClamped = Math.min(Math.max(pctAcum, 0), 999);
       const barClass   = barClassSegunPorcentaje(pctAcum);
+
+      const totalMesAct = totMesActual[suc] || 0;
+      const totalMesAnt = totMesAnterior[suc] || 0;
+
+      let comparativoTxt = `Mes actual: ${formatCurrency(totalMesAct)} • Mes anterior: ${formatCurrency(totalMesAnt)}`;
+      if (totalMesAnt > 0){
+        const diff = totalMesAct - totalMesAnt;
+        const diffPct = (diff / totalMesAnt) * 100;
+        const sign = diffPct >= 0 ? '+' : '';
+        comparativoTxt += ` (${sign}${diffPct.toFixed(1)}%)`;
+      } else if (totalMesAct > 0){
+        comparativoTxt += ' (sin datos comparables del mes anterior)';
+      }
 
       const col = document.createElement('div');
       col.className = 'col-12 col-md-4';
@@ -353,7 +502,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="progress progress-sm mb-1">
             <div class="progress-bar ${barClass}" role="progressbar" style="width:${Math.min(pctClamped,100).toFixed(1)}%"></div>
           </div>
-          <div class="small text-muted mb-2">Avance acumulado: ${pctAcum.toFixed(1)}%</div>
+          <div class="small text-muted mb-1">Avance acumulado: ${pctAcum.toFixed(1)}%</div>
+          <div class="small text-muted mb-2">${comparativoTxt}</div>
           <div class="d-flex justify-content-between small">
             <span>Día: <strong>${formatCurrency(totalDia)}</strong></span>
             <span>Total: <strong>${formatCurrency(totalAcum)}</strong></span>
@@ -365,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
     storeSummary.appendChild(frag);
   }
 
-  // NUEVO: tabla 1 fila por dependientx, sucursales solo texto, barra global en meta personal
+  // Tabla 1 fila por dependientx, sucursales solo texto, barra global en meta personal
   function renderResumenDependientes(){
     tbodyResumenDependientes.innerHTML = '';
     if (!registros.length) return;
@@ -377,7 +527,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const perDep = {};
 
     registros.forEach(r => {
-      if (!r.dependiente || !r.sucursal) return;
+      if (!esRegistroVigente(r) || !r.dependiente || !r.sucursal) return;
       if (!sucList.includes(r.sucursal)) return;
 
       if (sucSel !== 'TODAS' && r.sucursal !== sucSel) return;
@@ -401,7 +551,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const totalesPersonalGlobal = totalesPorDependienteGlobal();
-    const metaPersonalGlobal = config.metaPersonal || 0;
+    const metasCtx2 = getMetasContextuales();
+    const metaPersonalGlobal = metasCtx2.metaPersonal || 0;
+    const metasSuc2 = metasCtx2.metasSucursal || {};
 
     const rows = Object.values(perDep);
     rows.sort((a,b) => b.ventasGlobal - a.ventasGlobal);
@@ -410,7 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function buildSucursalTextCell(row, sucName){
       const montoSuc = row.porSucursal[sucName] || 0;
-      const metaSuc  = config.metasSucursal[sucName] || 0;
+      const metaSuc  = metasSuc2[sucName] || 0;
       const pctMeta  = metaSuc > 0 ? (montoSuc / metaSuc) * 100 : 0;
 
       if (metaSuc <= 0 && montoSuc === 0){
@@ -515,7 +667,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fechaTitulo = fechaSel || 'todas las fechas';
     const mapaRegistros = registrosPorDependiente(fechaSel);
-    const metaPersonal = config.metaPersonal || 0;
+    const metasCtx3 = getMetasContextuales();
+    const metaPersonal = metasCtx3.metaPersonal || 0;
 
     data.forEach((d, index) => {
       if (index > 0){
@@ -591,6 +744,50 @@ document.addEventListener('DOMContentLoaded', () => {
     recomputarTodo();
   });
 
+  if (btnCorteMes){
+    btnCorteMes.addEventListener('click', () => {
+      const baseStr = fechaInput.value || hoyISO();
+      const baseDate = parseISODate(baseStr) || new Date();
+      const lastDay = ultimoDiaMes(baseDate);
+      const yyyy = lastDay.getFullYear();
+      const mm   = String(lastDay.getMonth()+1).padStart(2,'0');
+      const dd   = String(lastDay.getDate()).padStart(2,'0');
+      const isoCorte  = `${yyyy}-${mm}-${dd}`;
+
+      // El corte se guarda hasta el último día del mes seleccionado
+      ultimoCorte = isoCorte;
+
+      // Snapshot de metas en el momento del corte
+      metasUltimoCorte = {
+        metasSucursal: { ...config.metasSucursal },
+        metaPersonal: config.metaPersonal
+      };
+
+
+      // Día siguiente al corte: nuevo periodo de recolección
+      const nextDate = new Date(lastDay.getTime() + 24*60*60*1000);
+      const yyyyN = nextDate.getFullYear();
+      const mmN   = String(nextDate.getMonth()+1).padStart(2,'0');
+      const ddN   = String(nextDate.getDate()).padStart(2,'0');
+      const isoNext = `${yyyyN}-${mmN}-${ddN}`;
+
+      guardarRegistros()
+        .then(() => {
+          Swal.fire('Corte de mes realizado', `Se aplicó corte al ${isoCorte}.\nDesde el día siguiente el acumulado inicia en cero.`, 'success');
+          if (fpInstance){
+            fpInstance.setDate(isoNext, true);
+          } else {
+            fechaInput.value = isoNext;
+            recomputarTodo();
+          }
+        })
+        .catch(err => {
+          console.error('Error guardando corte:', err);
+          Swal.fire('Error','No se pudo guardar el corte.','error');
+        });
+    });
+  }
+
   fechaInput.addEventListener('change', recomputarTodo);
   sucursalFiltro.addEventListener('change', recomputarTodo);
 
@@ -652,11 +849,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const rec = await cargarRegistros();
     if (rec && Array.isArray(rec.registros)){
-      registros     = rec.registros;
-      lastUpdateISO = rec.meta?.updatedAt || null;
+      registros        = rec.registros;
+      lastUpdateISO    = rec.meta?.updatedAt || null;
+      ultimoCorte      = rec.meta?.ultimoCorte || null;
+      metasUltimoCorte = rec.meta?.metasUltimoCorte || null;
     } else {
-      registros = [];
-      lastUpdateISO = null;
+      registros        = [];
+      lastUpdateISO    = null;
+      ultimoCorte      = null;
+      metasUltimoCorte = null;
     }
     actualizarLastSaved();
     recomputarTodo();

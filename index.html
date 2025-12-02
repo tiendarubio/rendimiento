@@ -51,7 +51,7 @@
         <!-- Filtros -->
         <div class="col-12 col-lg-6">
           <div class="subcard p-2">
-            <div class="row g-3">
+            <div class="row g-3 align-items-start">
               <div class="col-12 col-md-6">
                 <label for="fechaInput" class="form-label fw-semibold mb-0">Fecha corte (venta diaria)</label>
                 <input type="text" id="fechaInput" class="form-control" placeholder="Selecciona una fecha">
@@ -77,6 +77,9 @@
               <button id="btnHoy" class="btn btn-outline-secondary flex-fill">
                 <i class="fa-regular fa-calendar"></i> Hoy
               </button>
+              <button id="btnCorteMes" class="btn btn-outline-secondary flex-fill">
+                <i class="fa-regular fa-calendar-check"></i> Corte fin de mes
+              </button>
               <button id="btnEstadoCuenta" class="btn btn-outline-primary flex-fill">
                 <i class="fa-solid fa-file-pdf"></i> Estado de cuenta
               </button>
@@ -91,7 +94,7 @@
       <!-- Registro de venta diaria -->
       <div class="mt-3 subcard p-2">
         <h3 class="h6 mb-2">Registrar venta diaria</h3>
-        <div class="row g-3 align-items-end">
+        <div class="row g-3 align-items-start">
           <div class="col-12 col-lg-4">
             <label for="dependienteSelect" class="form-label mb-0">Dependientx</label>
             <select id="dependienteSelect" class="form-select"></select>
